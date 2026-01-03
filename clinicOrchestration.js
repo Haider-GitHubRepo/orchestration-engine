@@ -1,26 +1,30 @@
-import { Appointment } from "./Appointment.js";
+import { TASKS } from "./orchestrationFlow.js";
 
-const clinicOrchestration = async () => {
-  const tasks = new Appointment();
-
-  const serialTask1 = await tasks.patientVerification();
-  console.log(serialTask1);
-
-  const parallelTask1 = await Promise.all([
-    tasks.isSpecialistAvailable(),
-    tasks.isInsuaranceApproved(),
-  ]);
-  console.log(parallelTask1);
-
-  const serialTask2 = await tasks.processPayment();
-  console.log(serialTask2);
-
-  const parallelTask2 = await Promise.all([
-    tasks.lockCalendar(),
-    tasks.sendNotification(),
-    tasks.createMedicalRecord(),
-  ]);
-  console.log(parallelTask2);
+const refund = async () => {
+  console.log("Refund initiated");
+  await new Promise((resolve) => setTimeout(resolve, 2000));
+  console.log("Refund Successfull");
 };
 
-clinicOrchestration();
+const orchestrate = async (TASKS) => {
+  for (const stage of TASKS) {
+    console.log("Started -->", stage.name, "\n");
+
+    try {
+      const result = await Promise.all(stage.tasks.map((task) => task()));
+      console.log(result, "\n");
+    } catch (err) {
+      console.log(`${stage.name} failed :`, err, "\n");
+      if (err.errTask === "createMedicalRecord") {
+        await refund();
+      }
+      break;
+    }
+
+    console.log("Successful -->", stage.name, "\n");
+  }
+
+  console.log("Orchestration successful\n");
+};
+
+orchestrate(TASKS);
